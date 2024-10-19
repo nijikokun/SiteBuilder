@@ -1,5 +1,6 @@
 import yaml from 'js-yaml';
-import { Page, SiteBuilder } from '../lib/SiteBuilder';
+import path from 'node:path';
+import { Page, SiteBuilder, PublicAssets } from '../lib/SiteBuilder';
 
 interface ngrokTrafficPolicyRule {
     expressions?: string[],
@@ -42,42 +43,63 @@ export class ngrokPlugin {
     }
 
     // Method to create a traffic policy in YAML format
-    private generateTrafficPolicy(pages: Page[]): string {
+    private generateTrafficPolicy(pages: Page[], assets: PublicAssets): string {
         const policy = {
-            on_http_request: pages.map(page => {
-                const rule: ngrokTrafficPolicyRule = {
-                    expressions: [],
-                    actions: []
-                };
+            on_http_request: [
+                // Generate custom-response rules for public assets
+                ...Object.entries(assets).map(([filepath, asset]) => {
+                    const rule: ngrokTrafficPolicyRule = {
+                        expressions: [`req.url.path == '/${filepath}'`],
+                        actions: [
+                            {
+                                type: 'custom-response',
+                                config: {
+                                    status_code: 200,
+                                    content: asset.content,
+                                    headers: {
+                                        'content-type': this.getContentType(filepath) || 'text/plain'
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    return rule;
+                }),
+                ...pages.map(page => {
+                    const rule: ngrokTrafficPolicyRule = {
+                        expressions: [],
+                        actions: []
+                    };
 
-                const noTrailingSlashCondition = `req.url.path == '${page.permalinkClean}'`
-                const trailingSlashCondition = page.permalinkClean == '/' ? '' : `req.url.path == '${page.permalinkClean}/'`
-                const aliasCondition = page.permalinkAlias ? `req.url.path == '${page.permalinkAlias}'` : '';
+                    const noTrailingSlashCondition = `req.url.path == '${page.permalinkClean}'`
+                    const trailingSlashCondition = page.permalinkClean == '/' ? '' : `req.url.path == '${page.permalinkClean}/'`
+                    const aliasCondition = page.permalinkAlias ? `req.url.path == '${page.permalinkAlias}'` : '';
 
-                rule.expressions = page.frontmatter.policy_expressions || [
-                    [
-                        noTrailingSlashCondition,
-                        trailingSlashCondition,
-                        aliasCondition
-                    ].filter(Boolean).join(' || ')
-                ];
+                    rule.expressions = page.frontmatter.policy_expressions || [
+                        [
+                            noTrailingSlashCondition,
+                            trailingSlashCondition,
+                            aliasCondition
+                        ].filter(Boolean).join(' || ')
+                    ];
 
-                rule.actions = [
-                    ...(page.frontmatter.policy_actions || []),
-                    {
-                        type: 'custom-response',
-                        config: {
-                            status_code: page.frontmatter.policy_status_code || 200,
-                            content: page.output,
-                            headers: page.frontmatter.policy_headers || {
-                                'content-type': 'text/html'
+                    rule.actions = [
+                        ...(page.frontmatter.policy_actions || []),
+                        {
+                            type: 'custom-response',
+                            config: {
+                                status_code: page.frontmatter.policy_status_code || 200,
+                                content: page.output,
+                                headers: page.frontmatter.policy_headers || {
+                                    'content-type': 'text/html'
+                                }
                             }
                         }
-                    }
-                ]
+                    ]
 
-                return rule
-            })
+                    return rule
+                })
+            ]
         };
 
         // Convert the policy to YAML
@@ -165,13 +187,26 @@ export class ngrokPlugin {
         }
     }
 
+    // Helper method to determine content type based on file extension
+    private getContentType(filePath: string): string | undefined {
+        const ext = path.extname(filePath).toLowerCase();
+        switch (ext) {
+            case '.html': return 'text/html';
+            case '.css': return 'text/css';
+            case '.js': return 'application/javascript';
+            case '.json': return 'application/json';
+            case '.txt': return 'text/plain';
+            default: return undefined;
+        }
+    }
+
     // Hook into SiteBuilder's afterBuild hook to generate or update cloud endpoint
     async afterBuild(builder: SiteBuilder, pages: Page[]) {
-        // Generate a basic traffic policy using page URLs
-        console.log(pages)
+        // Access public assets
+        const assets = builder.publicAssets;
 
-        const trafficPolicy = this.generateTrafficPolicy(pages);
-        console.log(trafficPolicy)
+        // Generate a basic traffic policy using page URLs and public assets
+        const trafficPolicy = this.generateTrafficPolicy(pages, assets);
 
         // Either create or update the cloud endpoint
         await this.createOrUpdateCloudEndpoint(trafficPolicy, this.config.endpoint.url);

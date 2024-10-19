@@ -7,6 +7,10 @@ import MarkdownIt from 'markdown-it';
 import pLimit from 'p-limit';
 import * as yup from 'yup';
 import * as crypto from 'node:crypto';
+import { Stats } from 'fs';
+
+export type PublicAsset = { content: string; stats: Stats }
+export type PublicAssets = Record<string, PublicAsset>
 
 export interface Plugin {
     version: string; // Specify the version of the plugin
@@ -39,6 +43,7 @@ export class SiteBuilder {
     collections: Record<string, any[]> = {};
     data: Record<string, any> = {};
     includes: Record<string, any> = {};
+    publicAssets: PublicAssets = {};
     private plugins: Plugin[] = [];
     private cache: Map<string, Page> = new Map();
 
@@ -72,7 +77,7 @@ export class SiteBuilder {
     }
 
     constructor() {
-        this.eta = new Eta(); // Initialize template engine
+        this.eta = new Eta({ views: path.join(Config.build.src, 'includes') }); // Initialize template engine
         this.md = new MarkdownIt(); // Initialize markdown renderer
     }
     
@@ -82,6 +87,9 @@ export class SiteBuilder {
 
         // Load includes from src/includes (with frontmatter parsing)
         await this.loadIncludes(Config.build.src);
+
+        // Load public assets from src/public
+        await this.loadPublicAssets(Config.build.src);
 
         // Load site files from src/site
         const siteFiles = await this.loadSiteFiles(Config.build.src);
@@ -102,6 +110,21 @@ export class SiteBuilder {
         
         // Output pages to memory (later used by plugins)
         return pages;
+    }
+
+    // Method to load public assets from the `src/public` directory
+    async loadPublicAssets(basePath: string) {
+        const publicDirPath = path.join(basePath, 'public');
+        const publicFiles = await this.loadFiles(publicDirPath);
+
+        for (const absoluteFilePath of publicFiles) {
+            const content = await fs.readFile(absoluteFilePath, 'utf-8');
+            const relativeFilePath = path.relative(publicDirPath, absoluteFilePath);
+            this.publicAssets[relativeFilePath] = { content, stats: await fs.stat(absoluteFilePath) };
+        }
+
+        // Trigger plugin hooks for the loaded public assets
+        await this.triggerHook('onAssetsLoaded', this.publicAssets);
     }
 
     // Load data from src/data
@@ -142,17 +165,18 @@ export class SiteBuilder {
     }
 
     // Load files from directory recursively
-    async loadFiles(directory: string, extFilter: RegExp) {
+    async loadFiles(directory: string, extFilter?: RegExp) {
         try {
             const entries = await fs.readdir(directory, { withFileTypes: true });
             const files = await Promise.all(entries.map(async (entry) => {
                 const fullPath = path.join(directory, entry.name);
                 if (entry.isDirectory()) {
                     return this.loadFiles(fullPath, extFilter); // Recursively load
-                } else if (extFilter.test(fullPath)) {
-                    return fullPath;
                 }
-                return null;
+                if (extFilter && !extFilter.test(fullPath)) {
+                    return null;
+                }
+                return fullPath;
             }));
             return files.flat().filter(Boolean); // Flatten and filter null entries
         } catch (e) {

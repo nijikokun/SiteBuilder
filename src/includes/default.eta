@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= it.title || it.data.site.title || 'Default Title' %></title>
+  <meta name="description" content="<%= it.description || it.data.site.description || 'Default description' %>">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main class="main">
+    <%~ it.content %>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; nijikokun <%= new Date().getFullYear() %></p>
+  </footer>
+</body>
+</html>

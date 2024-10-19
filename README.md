@@ -16,7 +16,7 @@
 ### Install
 
 ```
-git clone https://github.com/nijikokun/niji.ngrok.dev.git .
+git clone https://github.com/nijikokun/SiteBuilder.git .
 bun install
 ```
 
@@ -48,6 +48,7 @@ bun run ./index.ts
 - `src/` - The source directory for your site content.
   - `data/` - Contains global data files (YAML, JSON) accessible in your templates.
   - `includes/` - Contains layouts and partials used in templates.
+  - `public/` - Contains public assets files.
   - `site/` - Contains the main site content (Markdown, HTML, etc.).
 - `lib/` - Source code for SiteBuilder lives here.
   - `SiteBuilder.ts` 
@@ -60,10 +61,10 @@ bun run ./index.ts
 
 **SiteBuilder** supports a plugin system that allows developers to extend its core functionality. Plugins can hook into the build process at different stages such as `beforeBuild`, `afterBuild`, and more.
 
-
 ### Available Plugins
 
 - `ngrok` - Deploy site to ngrok via Traffic Policy and Cloud Endpoints
+- `MinifyCssPlugin` - Minifies CSS files from the `src/public` directory
 
 ### Creating your own Plugin
 
@@ -124,7 +125,3 @@ interface Plugin {
 ## License
 
 The code in this repository, including the `index.ts`, `config.ts` files, and the `lib/` and `plugins/` directories, is licensed under the MIT License.
-
-Note: All personal site content, including files within the `src/` directory and any subdirectories (unless otherwise specified), is not covered by the MIT License. This content remains the exclusive property of me and may not be reproduced, distributed, or used without permission.
-
-Eventually I will create a repository specifically for the SiteBuilder code so this clause doesn't have to be here.
