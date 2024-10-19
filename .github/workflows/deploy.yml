@@ -15,6 +15,6 @@ jobs:
       - run: bun install
       - shell: bash
         env:
-          NGROK_API_KEY: ${{ secrets.ngrokApiKey }}
-          NGROK_ENDPOINT_URL: ${{ secrets.ngrokEndpointUrl }}
+          NGROK_API_KEY: ${{ secrets.NGROK_API_KEY }}
+          NGROK_ENDPOINT_URL: ${{ secrets.NGROK_ENDPOINT_URL }}
         run: bun run ./index.ts
