@@ -1,5 +1,7 @@
 <% layout("./default") %>
 
 <article class="post-single">
-    <%~ it.content %>
+    <div class="post-content">
+        <%~ it.content %>
+    </div>
 </article>
