@@ -207,6 +207,7 @@ export class ngrokPlugin {
 
         // Generate a basic traffic policy using page URLs and public assets
         const trafficPolicy = this.generateTrafficPolicy(pages, assets);
+        // console.log(trafficPolicy)
 
         // Either create or update the cloud endpoint
         await this.createOrUpdateCloudEndpoint(trafficPolicy, this.config.endpoint.url);

@@ -1,0 +1,5 @@
+<% layout("./default") %>
+
+<article class="post-single">
+    <%~ it.content %>
+</article>

@@ -1,6 +1,6 @@
 ---
 title: SiteBuilder
-layout: default
+layout: post
 ---
 
 # SiteBuilder
