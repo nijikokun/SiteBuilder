@@ -1,0 +1,20 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - shell: bash
+        env:
+          NGROK_API_KEY: ${{ secrets.ngrokApiKey }}
+          NGROK_ENDPOINT_URL: ${{ secrets.ngrokEndpointUrl }}
+        run: bun run ./index.ts
