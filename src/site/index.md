@@ -31,5 +31,26 @@ bun install
 bun run ./index.ts
 ```
 
+## Deploying with `ngrok` plugin
+
+To use the `ngrok` deploy plugin you will need:
+
+- An [ngrok account](https://dashboard.ngrok.com/)
+- A [reserve domain](https://dashboard.ngrok.com/domains/new)
+- An [ngrok API key](https://dashboard.ngrok.com/api-keys/new)
+
+Once you have these you should set the following environment variables:
+
+```bash
+export NGROK_API_KEY=<your-api-key>
+export NGROK_ENDPOINT_URL=https://<your-reserve-domain>
+```
+
+Then run:
+
+```bash
+bun run ./install
+```
+
 ## Activity
 ![Alt](https://repobeats.axiom.co/api/embed/a864ff7bdf9351fd4f23bd0aafad8e6e229799d1.svg "Repobeats analytics image")
