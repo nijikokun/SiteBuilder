@@ -5,7 +5,7 @@
 ## Features
 
 - **Modular Plugin System**: Easily extend the functionality with plugins to integrate new features.
-- **Flexible Templating**: Use markdown, HTML, or your preferred templating engine (currently integrated with [Eta](https://eta.js.org/)).
+- **Flexible Templating**: Use markdown, HTML, or your preferred templating engine (currently integrated with [eta](https://eta.js.org/)).
 - **Dynamic Content Handling**: Generate pages dynamically based on frontmatter and customizable collections.
 - **Customizable Build Process**: Hook into the build process at various stages to modify or extend the behavior of the generator.
 
