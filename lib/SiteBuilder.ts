@@ -143,17 +143,21 @@ export class SiteBuilder {
 
     // Load files from directory recursively
     async loadFiles(directory: string, extFilter: RegExp) {
-        const entries = await fs.readdir(directory, { withFileTypes: true });
-        const files = await Promise.all(entries.map(async (entry) => {
-            const fullPath = path.join(directory, entry.name);
-            if (entry.isDirectory()) {
-                return this.loadFiles(fullPath, extFilter); // Recursively load
-            } else if (extFilter.test(fullPath)) {
-                return fullPath;
-            }
-            return null;
-        }));
-        return files.flat().filter(Boolean); // Flatten and filter null entries
+        try {
+            const entries = await fs.readdir(directory, { withFileTypes: true });
+            const files = await Promise.all(entries.map(async (entry) => {
+                const fullPath = path.join(directory, entry.name);
+                if (entry.isDirectory()) {
+                    return this.loadFiles(fullPath, extFilter); // Recursively load
+                } else if (extFilter.test(fullPath)) {
+                    return fullPath;
+                }
+                return null;
+            }));
+            return files.flat().filter(Boolean); // Flatten and filter null entries
+        } catch (e) {
+            return []
+        }
     }
 
     // Process site file for frontmatter, content, and collections

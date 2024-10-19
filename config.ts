@@ -2,7 +2,7 @@ import * as path from 'path';
 
 export const Config = {
     build: {
-        src: './src',
+        src: path.join(process.cwd(), 'src'),
         concurrencyLimit: 5,
     },
 
