@@ -5,7 +5,7 @@ layout: post
 
 # SiteBuilder
 
-**SiteBuilder** is a flexible in-memory static site generator built in Typescript, with a modular plugin system. It allows developers to create static websites from markdown, HTML, or custom templating languages, with customizable content pipelines, collections, and build hooks.
+**SiteBuilder** is a flexible in-memory static site generator built in Typescript, with a modular plugin system. It allows developers to create static websites from markdown, HTML, or custom templating languages, with customizable content pipelines, collections and build hooks.
 
 ## Features
 
