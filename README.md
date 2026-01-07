@@ -1,3 +1,4 @@
+
 # SiteBuilder
 
 **SiteBuilder** is a flexible in-memory static site generator built in Typescript, with a modular plugin system. It allows developers to create static websites from markdown, HTML, or custom templating languages, with customizable content pipelines, collections, and build hooks.
@@ -31,7 +32,7 @@ bun run ./index.ts
 To use the `ngrok` deploy plugin you will need:
 
 - An [ngrok account](https://dashboard.ngrok.com/)
-- A [reserve domain](https://dashboard.ngrok.com/domains/new)
+- A [reserved domain](https://dashboard.ngrok.com/domains/new)
 - An [ngrok API key](https://dashboard.ngrok.com/api-keys/new)
 
 Once you have these you should set the following environment variables:
@@ -44,7 +45,7 @@ export NGROK_ENDPOINT_URL=https://<your-reserve-domain>
 Then run:
 
 ```bash
-bun run ./install
+bun run build
 ```
 
 ## Directory Structure
