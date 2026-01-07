@@ -5,33 +5,79 @@ layout: post
 
 # SiteBuilder
 
-**SiteBuilder** is a flexible in-memory static site generator built in Typescript, with a modular plugin system. It allows developers to create static websites from markdown, HTML, or custom templating languages, with customizable content pipelines, collections, and build hooks.
+**SiteBuilder** is a flexible in-memory static site generator built in TypeScript. Unlike traditional static site generators that output files to disk, SiteBuilder keeps everything in memory and relies on plugins to deploy or output your site.
+
+## How It Works
+
+1. **Load** — Reads data files (YAML/JSON), includes (layouts/partials), public assets, and site content (Markdown/HTML)
+2. **Process** — Parses frontmatter, validates schemas, builds collections from tags, and renders templates
+3. **Build** — Applies layouts, generates permalinks, and caches pages by content hash
+4. **Deploy** — Plugins handle output (e.g., the `ngrok` plugin deploys via Traffic Policy)
+
+### Content Pipeline
+
+```
+src/data/*.yaml     → Global data (accessible as `data.filename`)
+src/includes/*.eta  → Layouts & partials (with optional frontmatter)
+src/public/*        → Static assets (CSS, JS, images)
+src/site/*.md       → Pages (Markdown with frontmatter)
+```
+
+Pages are processed through:
+- **Frontmatter parsing** — YAML metadata (title, date, tags, permalink, layout, draft)
+- **Template rendering** — [Eta](https://eta.js.org/) templating with access to `data`, `collections`, and `includes`
+- **Markdown conversion** — Via [markdown-it](https://github.com/markdown-it/markdown-it)
+- **Layout wrapping** — Content injected into layout templates
+
+### Frontmatter Options
+
+```yaml
+---
+title: My Page           # Page title
+date: 2024-01-15         # Publication date
+draft: true              # Exclude from build (unless BUILD_DRAFTS=true)
+tags: [blog, tutorial]   # Add to collections
+permalink: /custom-url/  # Custom URL path
+alias: /old-url/         # Redirect alias
+layout: post             # Layout template name
+---
+```
 
 ## Features
 
-- **Modular Plugin System**: Easily extend the functionality with plugins to integrate new features.
-- **Flexible Templating**: Use markdown, HTML, or your preferred templating engine (currently integrated with [eta](https://eta.js.org/)).
-- **Dynamic Content Handling**: Generate pages dynamically based on frontmatter and customizable collections.
-- **Customizable Build Process**: Hook into the build process at various stages to modify or extend the behavior of the generator.
+- **In-Memory Build** — No disk I/O during build; plugins decide output strategy
+- **Plugin Hooks** — `beforeBuild`, `afterBuild`, `beforeRenderContent`, `afterRenderLayout`, and more
+- **Collections** — Auto-generated from tags, accessible in templates
+- **Caching** — Content-hash based caching skips unchanged pages
+- **Concurrent Processing** — Configurable parallelism for large sites
 
 ## Installation
+
 ### Prerequisites
-- Bun
+- [Bun](https://bun.sh/)
 
 ### Install
 
-```
+```bash
 git clone https://github.com/nijikokun/SiteBuilder.git .
 bun install
 ```
 
 ## Building
 
-```
-bun run ./index.ts
+```bash
+bun run build
 ```
 
 ## Deploying with `ngrok` plugin
+
+The `ngrok` plugin deploys your site using [Traffic Policy](https://ngrok.com/docs/traffic-policy/) and Cloud Endpoints. Content is served via the `custom-response` action.
+
+### CEL Expressions
+
+You can use CEL expressions in your content with `\${...}` syntax (e.g., `\${req.headers['x-custom']}`). To output a literal `\${` without it being interpreted as a CEL expression, escape it as `\\\${`.
+
+### Requirements
 
 To use the `ngrok` deploy plugin you will need:
 
@@ -50,6 +96,40 @@ Then run:
 
 ```bash
 bun run build
+```
+
+### Auto-Deploy with GitHub Actions
+
+To automatically deploy on push to `main`, set up a GitHub Environment with your secrets:
+
+1. Go to **Settings → Environments → New environment**
+2. Name it (e.g., `production` or your domain)
+3. Add secrets:
+   - `NGROK_API_KEY` — Your ngrok API key
+   - `NGROK_ENDPOINT_URL` — Your endpoint URL (e.g., `https://example.ngrok.app`)
+
+The included workflow at `.github/workflows/deploy.yml` handles the rest:
+
+```yaml
+name: build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    environment: production  # Change to your environment name
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - env:
+          NGROK_API_KEY: \${{ secrets.NGROK_API_KEY }}
+          NGROK_ENDPOINT_URL: \${{ secrets.NGROK_ENDPOINT_URL }}
+        run: bun run build
 ```
 
 ## Directory Structure
@@ -112,7 +192,7 @@ bun run build
         afterBuild(pages: Page[], builder: SiteBuilder): void {
             console.log('Built Pages:');
             pages.forEach(page => {
-                console.log(`- ${page.filePath}`);
+                console.log(`- \${page.filePath}`);
             });
         }
     }
@@ -127,7 +207,7 @@ bun run build
    ```
 4. Run
    ```bash
-   bun run ./index.ts
+   bun run build
    ```
 
 #### Plugin Interface

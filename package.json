@@ -21,8 +21,9 @@
     "yup": "^1.4.0"
   },
   "devDependencies": {
+    "@types/bun": "^1.3.5",
     "@types/clean-css": "^4.2.11",
-    "@types/markdown-it": "^14.1.2",
-    "@types/node": "^22.7.5"
+    "@types/js-yaml": "^4.0.9",
+    "@types/markdown-it": "^14.1.2"
   }
 }

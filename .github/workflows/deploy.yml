@@ -18,4 +18,4 @@ jobs:
         env:
           NGROK_API_KEY: ${{ secrets.NGROK_API_KEY }}
           NGROK_ENDPOINT_URL: ${{ secrets.NGROK_ENDPOINT_URL }}
-        run: bun run ./index.ts
+        run: bun run build

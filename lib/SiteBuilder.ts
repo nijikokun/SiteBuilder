@@ -53,7 +53,8 @@ export class SiteBuilder {
         draft: yup.boolean().default(false),
         permalink: yup.string().optional(),
         alias: yup.string().optional(),
-        tags: yup.array(yup.string()).default([])
+        tags: yup.array(yup.string()).default([]),
+        layout: yup.string().optional()
     });
 
     // Method to register plugins

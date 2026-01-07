@@ -1,6 +1,8 @@
 import yaml from 'js-yaml';
 import path from 'node:path';
-import { Page, SiteBuilder, PublicAssets } from '../lib/SiteBuilder';
+import type { Page, PublicAssets } from '../lib/SiteBuilder';
+import { SiteBuilder } from '../lib/SiteBuilder';
+import { exit } from 'node:process';
 
 interface ngrokTrafficPolicyRule {
     expressions?: string[],
@@ -26,6 +28,15 @@ interface ngrokPluginConfig {
     }
 }
 
+interface ngrokApiResponseError {
+    error_code: string,
+    status_code: number,
+    msg: string,
+    details: {
+        operation_id: string
+    }
+}
+
 export class ngrokPlugin {
     config: ngrokPluginConfig;
     version: string;
@@ -48,8 +59,9 @@ export class ngrokPlugin {
             on_http_request: [
                 // Generate custom-response rules for public assets
                 ...Object.entries(assets).map(([filepath, asset]) => {
+                    const urlPath = filepath.replace(/\\/g, '/');
                     const rule: ngrokTrafficPolicyRule = {
-                        expressions: [`req.url.path == '/${filepath}'`],
+                        expressions: [`req.url.path == '/${urlPath}'`],
                         actions: [
                             {
                                 type: 'custom-response',
@@ -117,14 +129,25 @@ export class ngrokPlugin {
             }
         });
 
-        const data = await response.json();
-        if (!response.ok) {
-            console.error('Error fetching endpoints:', data);
-            return null;
+        if (response.ok) {
+            const data = await response.json() as { 
+                endpoints: any[], 
+                uri: string, 
+                next_uri: string 
+            };
+            const endpoint = data.endpoints.find((ep: any) => ep.url === url);
+            return endpoint ? endpoint.id : null;
+        } else {
+            const data = await response.json() as ngrokApiResponseError;
+            console.error('Error fetching endpoints:');
+            console.log('');
+            console.log(data.msg);
+            console.log('');
+            console.log('Raw response:');
+            console.log(data);
+            console.log('');
+            process.exit(1);
         }
-
-        const endpoint = data.endpoints.find((ep: any) => ep.url === url);
-        return endpoint ? endpoint.id : null;
     }
 
     // Method to create a cloud endpoint using the traffic policy
@@ -144,11 +167,19 @@ export class ngrokPlugin {
             })
         });
 
-        const data = await response.json();
         if (response.ok) {
+            const data = await response.json() as { id: string };
             console.log('Cloud endpoint created with ID:', data.id);
         } else {
-            console.error('Error creating cloud endpoint:', data);
+            const data = await response.json() as ngrokApiResponseError;
+            console.error('Error creating cloud endpoint:');
+            console.log('');
+            console.log(data.msg);
+            console.log('');
+            console.log('Raw response:');
+            console.log(data);
+            console.log('');
+            process.exit(1);
         }
     }
 
@@ -166,11 +197,19 @@ export class ngrokPlugin {
             })
         });
 
-        const data = await response.json();
         if (response.ok) {
-            console.log('Cloud endpoint updated:', endpointId);
+            const data = await response.json() as { id: string };
+            console.log('Cloud endpoint updated:', data.id);
         } else {
-            console.error('Error updating cloud endpoint:', data);
+            const data = await response.json() as ngrokApiResponseError;
+            console.error('Error updating cloud endpoint:');
+            console.log('');
+            console.log(data.msg);
+            console.log('');
+            console.log('Raw response:');
+            console.log(data);
+            console.log('');
+            process.exit(1);
         }
     }
 
